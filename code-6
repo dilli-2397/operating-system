@@ -1,0 +1,62 @@
+#include <stdio.h>
+#include <limits.h>
+
+int main() {
+    int n, i, j, completed = 0, time = 0;
+    printf("Enter number of processes: ");
+    scanf("%d", &n);
+
+    int burst_time[n], remaining_bt[n], priority[n], waiting_time[n] = {0}, turnaround_time[n] = {0};
+    int total_wt = 0, total_tt = 0;
+
+    // Input burst times and priorities
+    for (i = 0; i < n; i++) {
+        printf("Enter burst time for Process P%d: ", i + 1);
+        scanf("%d", &burst_time[i]);
+        remaining_bt[i] = burst_time[i];  // Initialize remaining burst time
+        printf("Enter priority for Process P%d (lower number = higher priority): ", i + 1);
+        scanf("%d", &priority[i]);
+    }
+
+    printf("\nGantt Chart (Process execution order):\n");
+
+    // Loop until all processes are completed
+    while (completed != n) {
+        int idx = -1;
+        int highest_priority = INT_MAX;
+
+        // Find process with highest priority among available
+        for (i = 0; i < n; i++) {
+            if (remaining_bt[i] > 0 && priority[i] < highest_priority) {
+                highest_priority = priority[i];
+                idx = i;
+            }
+        }
+
+        if (idx != -1) {
+            printf("P%d ", idx + 1);  // Print process being executed
+            remaining_bt[idx]--;
+            
+            // If process finishes execution
+            if (remaining_bt[idx] == 0) {
+                completed++;
+                turnaround_time[idx] = time + 1;  // TAT = current time + 1
+                waiting_time[idx] = turnaround_time[idx] - burst_time[idx];
+                total_wt += waiting_time[idx];
+                total_tt += turnaround_time[idx];
+            }
+        }
+        time++;
+    }
+
+    // Print results
+    printf("\n\nProcess\tBurst Time\tPriority\tWaiting Time\tTurnaround Time\n");
+    for (i = 0; i < n; i++) {
+        printf("P%d\t%d\t\t%d\t\t%d\t\t%d\n", i + 1, burst_time[i], priority[i], waiting_time[i], turnaround_time[i]);
+    }
+
+    printf("\nAverage Waiting Time: %.2f\n", (float)total_wt / n);
+    printf("Average Turnaround Time: %.2f\n", (float)total_tt / n);
+
+    return 0;
+}
