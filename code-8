@@ -1,0 +1,62 @@
+#include <stdio.h>
+
+int main() {
+    int n, i, j, time_quantum;
+    printf("Enter number of processes: ");
+    scanf("%d", &n);
+
+    int burst_time[n], remaining_bt[n], waiting_time[n] = {0}, turnaround_time[n] = {0};
+    int total_wt = 0, total_tt = 0;
+
+    // Input burst times
+    for (i = 0; i < n; i++) {
+        printf("Enter burst time for Process P%d: ", i + 1);
+        scanf("%d", &burst_time[i]);
+        remaining_bt[i] = burst_time[i]; // Initialize remaining burst time
+    }
+
+    printf("Enter time quantum: ");
+    scanf("%d", &time_quantum);
+
+    int time = 0;
+    int done;
+
+    printf("\nGantt Chart (Process execution order):\n");
+
+    do {
+        done = 1;
+        for (i = 0; i < n; i++) {
+            if (remaining_bt[i] > 0) {
+                done = 0; // There is still a process to execute
+                if (remaining_bt[i] > time_quantum) {
+                    printf("P%d ", i + 1);
+                    remaining_bt[i] -= time_quantum;
+                    time += time_quantum;
+                } else {
+                    printf("P%d ", i + 1);
+                    time += remaining_bt[i];
+                    waiting_time[i] = time - burst_time[i];
+                    remaining_bt[i] = 0;
+                    turnaround_time[i] = time;
+                }
+            }
+        }
+    } while (!done);
+
+    // Calculate total waiting and turnaround times
+    for (i = 0; i < n; i++) {
+        total_wt += waiting_time[i];
+        total_tt += turnaround_time[i];
+    }
+
+    // Print results
+    printf("\n\nProcess\tBurst Time\tWaiting Time\tTurnaround Time\n");
+    for (i = 0; i < n; i++) {
+        printf("P%d\t%d\t\t%d\t\t%d\n", i + 1, burst_time[i], waiting_time[i], turnaround_time[i]);
+    }
+
+    printf("\nAverage Waiting Time: %.2f\n", (float)total_wt / n);
+    printf("Average Turnaround Time: %.2f\n", (float)total_tt / n);
+
+    return 0;
+}
