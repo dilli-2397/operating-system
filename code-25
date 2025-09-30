@@ -1,0 +1,82 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>      // open, fcntl
+#include <unistd.h>     // read, write, lseek, close
+#include <sys/stat.h>   // stat
+#include <dirent.h>     // opendir, readdir
+#include <string.h>
+
+int main() {
+    char filename[50] = "testfile.txt";
+    int fd;
+    char data[] = "Hello, UNIX I/O System Calls!\n";
+    char buffer[100];
+    struct stat fileStat;
+
+    // 1. Open/Create a file
+    fd = open(filename, O_CREAT | O_RDWR, 0644);
+    if (fd == -1) {
+        perror("Error opening file");
+        exit(1);
+    }
+    printf("File '%s' opened/created successfully.\n", filename);
+
+    // 2. Write to file
+    if (write(fd, data, strlen(data)) == -1) {
+        perror("Error writing to file");
+        close(fd);
+        exit(1);
+    }
+    printf("Data written successfully.\n");
+
+    // 3. Use lseek to move file pointer to start
+    lseek(fd, 0, SEEK_SET);
+
+    // 4. Read data from file
+    int n = read(fd, buffer, sizeof(buffer) - 1);
+    if (n == -1) {
+        perror("Error reading file");
+        close(fd);
+        exit(1);
+    }
+    buffer[n] = '\0';
+    printf("Data read from file: %s", buffer);
+
+    // 5. Use fcntl to get file flags
+    int flags = fcntl(fd, F_GETFL);
+    if (flags == -1) {
+        perror("Error getting file flags");
+    } else {
+        printf("File flags: %d\n", flags);
+    }
+
+    close(fd);
+
+    // 6. Use stat to get file info
+    if (stat(filename, &fileStat) == -1) {
+        perror("Error getting file stats");
+        exit(1);
+    }
+    printf("\nFile information for '%s':\n", filename);
+    printf("File size: %ld bytes\n", fileStat.st_size);
+    printf("Permissions: %o\n", fileStat.st_mode & 0777);
+
+    // 7. Open and list directory contents
+    char dirname[50] = ".";
+    DIR *d = opendir(dirname);
+    if (!d) {
+        perror("Error opening directory");
+        exit(1);
+    }
+    printf("\nFiles in directory '%s':\n", dirname);
+    struct dirent *entry;
+    while ((entry = readdir(d)) != NULL) {
+        printf("%s\n", entry->d_name);
+    }
+    closedir(d);
+
+    // Optional: Delete the file
+    // remove(filename);
+
+    return 0;
+}
