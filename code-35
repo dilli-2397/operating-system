@@ -1,0 +1,94 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define DISK_SIZE 50   // total blocks on disk
+int disk[DISK_SIZE];   // 0 = free, 1 = allocated
+
+typedef struct {
+    char name[20];
+    int indexBlock;   // index block location
+    int length;       // number of data blocks
+    int blocks[20];   // pointers to allocated blocks
+} File;
+
+File files[10];
+int fileCount = 0;
+
+// Function to find a free block
+int getFreeBlock() {
+    for (int i = 0; i < DISK_SIZE; i++) {
+        if (disk[i] == 0) {
+            disk[i] = 1;
+            return i;
+        }
+    }
+    return -1; // no free block
+}
+
+// Allocate file using indexed allocation
+void allocateFile(char name[], int length) {
+    int indexBlock = getFreeBlock();
+    if (indexBlock == -1) {
+        printf("Error: No space for index block.\n");
+        return;
+    }
+
+    File f;
+    strcpy(f.name, name);
+    f.indexBlock = indexBlock;
+    f.length = length;
+
+    printf("\nAllocating file '%s':\n", name);
+    printf("Index block at %d\n", indexBlock);
+
+    for (int i = 0; i < length; i++) {
+        int block = getFreeBlock();
+        if (block == -1) {
+            printf("Error: Not enough free blocks for file '%s'\n", name);
+            return;
+        }
+        f.blocks[i] = block;
+        printf("  File block %d allocated at disk block %d\n", i, block);
+    }
+
+    files[fileCount++] = f;
+}
+
+// Access file using its index block
+void accessFile(char name[], int record) {
+    for (int i = 0; i < fileCount; i++) {
+        if (strcmp(files[i].name, name) == 0) {
+            if (record >= files[i].length) {
+                printf("Error: File '%s' has only %d records\n", name, files[i].length);
+                return;
+            }
+            printf("\nAccessing file '%s':\n", name);
+            printf("Index block %d -> Disk block %d (record %d)\n",
+                   files[i].indexBlock, files[i].blocks[record], record);
+            return;
+        }
+    }
+    printf("Error: File '%s' not found\n", name);
+}
+
+// Display disk status
+void displayDisk() {
+    printf("\nDisk Status (1=allocated, 0=free):\n");
+    for (int i = 0; i < DISK_SIZE; i++) {
+        printf("%d ", disk[i]);
+        if ((i+1)%10 == 0) printf("\n");
+    }
+}
+
+int main() {
+    allocateFile("file1", 4);
+    allocateFile("file2", 5);
+
+    displayDisk();
+
+    accessFile("file1", 2);
+    accessFile("file2", 4);
+
+    return 0;
+}
