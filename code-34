@@ -1,0 +1,100 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define DISK_SIZE 50   // Total number of blocks on disk
+
+// Simulated disk: 0 = free, 1 = allocated
+int disk[DISK_SIZE] = {0};
+
+// Structure to represent a file
+typedef struct {
+    char name[20];
+    int start;
+    int length;
+} File;
+
+File files[10]; // Supports up to 10 files
+int fileCount = 0;
+
+// Function to allocate a file contiguously
+void allocateFile(char name[], int length) {
+    if (length > DISK_SIZE) {
+        printf("Error: Not enough space on disk.\n");
+        return;
+    }
+
+    int start = -1;
+
+    // Search for contiguous free blocks
+    for (int i = 0; i <= DISK_SIZE - length; i++) {
+        int free = 1;
+        for (int j = 0; j < length; j++) {
+            if (disk[i + j] == 1) {
+                free = 0;
+                break;
+            }
+        }
+        if (free) {
+            start = i;
+            break;
+        }
+    }
+
+    if (start == -1) {
+        printf("Error: Cannot allocate file %s, not enough contiguous space.\n", name);
+        return;
+    }
+
+    // Mark blocks as allocated
+    for (int j = 0; j < length; j++)
+        disk[start + j] = 1;
+
+    // Save file info
+    strcpy(files[fileCount].name, name);
+    files[fileCount].start = start;
+    files[fileCount].length = length;
+    fileCount++;
+
+    printf("File %s allocated from block %d to %d.\n", name, start, start + length - 1);
+}
+
+// Function to access a record sequentially
+void accessFile(char name[], int record) {
+    for (int i = 0; i < fileCount; i++) {
+        if (strcmp(files[i].name, name) == 0) {
+            if (record >= files[i].length) {
+                printf("Error: File %s has only %d records.\n", name, files[i].length);
+                return;
+            }
+            printf("Accessing file %s sequentially:\n", name);
+            for (int j = 0; j <= record; j++) {
+                printf("  Record %d at block %d\n", j, files[i].start + j);
+            }
+            return;
+        }
+    }
+    printf("Error: File %s not found.\n", name);
+}
+
+// Function to display disk usage
+void displayDisk() {
+    printf("\nDisk Status (1 = allocated, 0 = free):\n");
+    for (int i = 0; i < DISK_SIZE; i++) {
+        printf("%d ", disk[i]);
+        if ((i + 1) % 10 == 0) printf("\n");
+    }
+}
+
+int main() {
+    allocateFile("file1", 5);
+    allocateFile("file2", 8);
+    allocateFile("file3", 4);
+
+    displayDisk();
+
+    printf("\nAccessing records:\n");
+    accessFile("file2", 3); // Access 4th record (sequentially)
+
+    return 0;
+}
