@@ -1,0 +1,114 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define DISK_SIZE 50   // total blocks on disk
+int disk[DISK_SIZE];   // 0 = free, 1 = allocated
+
+// Node for linked allocation
+typedef struct Block {
+    int id;                 // block number
+    struct Block *next;     // pointer to next block
+} Block;
+
+// File structure
+typedef struct {
+    char name[20];
+    Block *start;   // pointer to first block
+    Block *end;     // pointer to last block
+    int length;     // number of blocks
+} File;
+
+File files[10];
+int fileCount = 0;
+
+// Find free block
+int getFreeBlock() {
+    for (int i = 0; i < DISK_SIZE; i++) {
+        if (disk[i] == 0) {
+            disk[i] = 1;
+            return i;
+        }
+    }
+    return -1; // no free block
+}
+
+// Allocate file using linked allocation
+void allocateFile(char name[], int length) {
+    File f;
+    strcpy(f.name, name);
+    f.start = f.end = NULL;
+    f.length = length;
+
+    printf("\nAllocating file '%s' with %d blocks:\n", name, length);
+
+    for (int i = 0; i < length; i++) {
+        int blockID = getFreeBlock();
+        if (blockID == -1) {
+            printf("Error: Not enough space on disk!\n");
+            return;
+        }
+
+        // Create new block
+        Block *newBlock = (Block *)malloc(sizeof(Block));
+        newBlock->id = blockID;
+        newBlock->next = NULL;
+
+        if (f.start == NULL) {
+            f.start = f.end = newBlock;
+        } else {
+            f.end->next = newBlock;
+            f.end = newBlock;
+        }
+
+        printf("  Block %d allocated.\n", blockID);
+    }
+
+    files[fileCount++] = f;
+}
+
+// Access file by traversing linked list
+void accessFile(char name[], int record) {
+    for (int i = 0; i < fileCount; i++) {
+        if (strcmp(files[i].name, name) == 0) {
+            if (record >= files[i].length) {
+                printf("Error: File '%s' has only %d records.\n", name, files[i].length);
+                return;
+            }
+
+            Block *temp = files[i].start;
+            int count = 0;
+            while (temp != NULL && count < record) {
+                temp = temp->next;
+                count++;
+            }
+
+            if (temp != NULL)
+                printf("\nAccessing record %d of file '%s' at block %d.\n", 
+                        record, name, temp->id);
+            return;
+        }
+    }
+    printf("Error: File '%s' not found.\n", name);
+}
+
+// Display disk status
+void displayDisk() {
+    printf("\nDisk Status (1=allocated, 0=free):\n");
+    for (int i = 0; i < DISK_SIZE; i++) {
+        printf("%d ", disk[i]);
+        if ((i+1)%10 == 0) printf("\n");
+    }
+}
+
+int main() {
+    allocateFile("file1", 4);
+    allocateFile("file2", 6);
+
+    displayDisk();
+
+    accessFile("file1", 2);
+    accessFile("file2", 4);
+
+    return 0;
+}
