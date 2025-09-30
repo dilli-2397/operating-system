@@ -1,0 +1,67 @@
+#include <stdio.h>
+
+int main() {
+    int n, frames, i, j, k;
+    
+    printf("Enter the number of pages: ");
+    scanf("%d", &n);
+    int pages[n];
+    printf("Enter the page reference string: ");
+    for (i = 0; i < n; i++)
+        scanf("%d", &pages[i]);
+
+    printf("Enter number of frames: ");
+    scanf("%d", &frames);
+    int frame[frames];
+    int counter[frames]; // To store last used time
+    for (i = 0; i < frames; i++) {
+        frame[i] = -1;
+        counter[i] = 0;
+    }
+
+    int page_faults = 0, time = 0;
+
+    printf("\nPage\tFrames\n");
+    for (i = 0; i < n; i++) {
+        time++;
+        int found = 0;
+
+        // Check if page is already in frame
+        for (j = 0; j < frames; j++) {
+            if (frame[j] == pages[i]) {
+                found = 1;
+                counter[j] = time; // Update last used time
+                break;
+            }
+        }
+
+        // If not found, replace least recently used page
+        if (!found) {
+            int lru_index = 0;
+            int min_time = counter[0];
+            for (j = 1; j < frames; j++) {
+                if (counter[j] < min_time) {
+                    min_time = counter[j];
+                    lru_index = j;
+                }
+            }
+            frame[lru_index] = pages[i];
+            counter[lru_index] = time;
+            page_faults++;
+        }
+
+        // Print current frames
+        printf("%d\t", pages[i]);
+        for (k = 0; k < frames; k++) {
+            if (frame[k] != -1)
+                printf("%d ", frame[k]);
+            else
+                printf("- ");
+        }
+        printf("\n");
+    }
+
+    printf("\nTotal Page Faults: %d\n", page_faults);
+
+    return 0;
+}
